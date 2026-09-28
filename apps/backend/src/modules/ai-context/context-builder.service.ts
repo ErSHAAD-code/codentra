@@ -18,7 +18,7 @@ export class ContextBuilderService {
   ) {}
 
   async buildForRepository(repositoryId: string) {
-    const [files, folders, languageStats] = await Promise.all([
+    const [files, folders] = await Promise.all([
       this.prisma.repositoryFile.findMany({ where: { repositoryId } }),
       this.prisma.repositoryFolder.findMany({ where: { repositoryId } }),
       this.prisma.languageStatistic.findMany({ where: { repositoryId } }),

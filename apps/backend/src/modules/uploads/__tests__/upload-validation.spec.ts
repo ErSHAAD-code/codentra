@@ -1,5 +1,6 @@
-import { assertValidUpload, sanitizeFileName, MAX_UPLOAD_SIZE_BYTES } from '../upload-validation';
 import { BadRequestException } from '@nestjs/common';
+
+import { assertValidUpload, sanitizeFileName, MAX_UPLOAD_SIZE_BYTES } from '../upload-validation';
 
 describe('upload-validation', () => {
   describe('assertValidUpload', () => {

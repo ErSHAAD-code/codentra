@@ -2,11 +2,12 @@ import { Body, Controller, Delete, Get, Param, Post, Res, UseGuards } from '@nes
 import { User } from '@prisma/client';
 import { Response } from 'express';
 
+import { ChatService } from './chat.service';
+import { SendMessageDto } from './dto/chat.dto';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { ChatService } from './chat.service';
-import { SendMessageDto } from './dto/chat.dto';
 
 @Controller('repositories/:repositoryId/chats')
 @UseGuards(SessionGuard)

@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 
+import { ContextBuilderService } from './context-builder.service';
+
 import { LanguageDetectorModule } from '@/modules/language-detector/language-detector.module';
 
-import { ContextBuilderService } from './context-builder.service';
 
 @Module({
   imports: [LanguageDetectorModule],

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { AI_PROVIDER } from './ai-provider.interface';
 import { ClaudeProvider } from './claude.provider';
 import { GeminiProvider } from './gemini.provider';

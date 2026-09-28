@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { CreateInvitationDto } from './dto/invitation.dto';
+
 import { PrismaService } from '@/common/prisma/prisma.service';
 
-import { CreateInvitationDto } from './dto/invitation.dto';
 
 const INVITATION_TTL_DAYS = 7;
 

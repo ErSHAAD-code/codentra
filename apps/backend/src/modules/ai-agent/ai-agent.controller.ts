@@ -13,8 +13,6 @@ import {
 import { User } from '@prisma/client';
 import { Response } from 'express';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
 import { AgentChangesetService } from './agent-changeset.service';
 import { AgentOrchestratorService } from './agent-orchestrator.service';
@@ -22,10 +20,11 @@ import { AiAgentService } from './ai-agent.service';
 import { AgentChangeset, AgentFileChange } from './dto/agent-changeset.dto';
 import { CreateAgentPlanDto, AgentPlanResult } from './dto/create-agent-plan.dto';
 import { RunAgentDto } from './dto/run-agent.dto';
-
 import { AgentValidationService } from './tools/agent-validation.service';
 
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { MultiModelProviderService } from '@/modules/ai-provider/multi-model-provider.service';
+import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
 @Controller('api/v1/ai/agent')
 @UseGuards(SessionGuard)

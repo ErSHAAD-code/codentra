@@ -7,6 +7,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { StructuredLogger } from '@/common/logger/structured-logger';
 

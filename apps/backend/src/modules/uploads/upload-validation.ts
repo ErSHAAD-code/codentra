@@ -1,5 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
 import path from 'path';
+
+import { BadRequestException } from '@nestjs/common';
 
 export const MAX_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024; // 50MB — configurable via env in Phase 7
 

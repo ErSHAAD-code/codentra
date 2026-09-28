@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
 import { User } from '@prisma/client';
+import { Request } from 'express';
 
 /**
  * Usage: findMany(@CurrentUser() user: User) — reads the user SessionGuard

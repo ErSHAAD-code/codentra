@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { AI_PROVIDER, AIProvider } from '@/modules/ai-provider/ai-provider.interface';
 import { CreateAgentPlanDto, AgentPlanResult } from './dto/create-agent-plan.dto';
+
+import { AI_PROVIDER, AIProvider } from '@/modules/ai-provider/ai-provider.interface';
 
 @Injectable()
 export class AiAgentService {

@@ -2,8 +2,6 @@ import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/co
 import { ArtifactType, User } from '@prisma/client';
 import { IsString } from 'class-validator';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
 import { AiProductivityService } from './ai-productivity.service';
 import {
@@ -16,6 +14,9 @@ import {
 } from './dto/ai-productivity.dto';
 import { EditorAiPromptDto } from './dto/editor-ai.dto';
 import { EditorReviewRequestDto } from './dto/editor-review.dto';
+
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
 class ExplainAlgorithmDto {
   @IsString()

@@ -1,9 +1,10 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
+
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { slugify } from '@/common/utils/slugify';
 
-import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 
 @Injectable()
 export class ProjectsService {

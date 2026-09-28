@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 
+import { CreateRepositoryDto, NewRepositoryDto } from './dto/repository.dto';
+import { RepositoriesService } from './repositories.service';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { CreateRepositoryDto, NewRepositoryDto } from './dto/repository.dto';
-import { RepositoriesService } from './repositories.service';
 
 @Controller('repositories')
 @UseGuards(SessionGuard)

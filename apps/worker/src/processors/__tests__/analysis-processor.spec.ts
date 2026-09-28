@@ -6,7 +6,7 @@ describe('parseFindings', () => {
       findings: [{ category: 'BUG', severity: 'HIGH', lineStart: 10, lineEnd: 12, title: 'Null check missing', description: 'x', suggestedFix: 'y' }],
     });
     expect(parseFindings(raw)).toHaveLength(1);
-    expect(parseFindings(raw)[0].title).toBe('Null check missing');
+    expect(parseFindings(raw)[0]?.title).toBe('Null check missing');
   });
 
   it('handles a response wrapped in markdown code fences', () => {

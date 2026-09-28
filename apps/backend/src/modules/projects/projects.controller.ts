@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 
+import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
+import { ProjectsService } from './projects.service';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
-import { ProjectsService } from './projects.service';
 
 @Controller('projects')
 @UseGuards(SessionGuard)

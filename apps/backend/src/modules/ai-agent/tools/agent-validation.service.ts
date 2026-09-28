@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+
 import {
   ValidationCommandType,
   ValidationResultDto,
@@ -95,7 +96,7 @@ export class AgentValidationService {
     }> = [];
 
     let errorCount = 0;
-    let warningCount = 0;
+    const warningCount = 0;
     let summary = '';
 
     switch (command) {
@@ -207,7 +208,7 @@ export class AgentValidationService {
   /** Strips sensitive patterns from log strings */
   private sanitizeSecrets(input: string): string {
     return input
-      .replace(/bearer\s+[a-zA-Z0-9_\-\.]+/gi, 'Bearer [REDACTED]')
+      .replace(/bearer\s+[a-zA-Z0-9_\-.]+/gi, 'Bearer [REDACTED]')
       .replace(/ghp_[a-zA-Z0-9]+/g, 'ghp_[REDACTED]')
       .replace(/DATABASE_URL=[^\s]+/g, 'DATABASE_URL=[REDACTED]')
       .replace(/SECRET=[^\s]+/g, 'SECRET=[REDACTED]');

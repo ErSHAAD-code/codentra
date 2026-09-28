@@ -1,5 +1,6 @@
 import AdmZip from 'adm-zip';
 import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
 import path from 'path';
 
 import { fetchGithubTarballEntries } from '../github-tarball';
@@ -21,7 +22,7 @@ export async function processRepository(prisma: PrismaClient, job: RepositoryPro
       if (!job.github) throw new Error('Missing GitHub download info on job');
       entries = await fetchGithubTarballEntries(job.github.url, job.github.token);
     } else {
-      entries = [{ entryName: path.basename(storagePath!), getData: () => require('fs').readFileSync(storagePath!) }];
+      entries = [{ entryName: path.basename(storagePath!), getData: () => fs.readFileSync(storagePath!) }];
     }
 
     const folderPaths = new Set<string>();

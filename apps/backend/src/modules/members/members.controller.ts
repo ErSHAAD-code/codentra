@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { IsIn } from 'class-validator';
 
+import { MembersService } from './members.service';
+
 import { PermissionGuard } from '@/common/permissions/permission.guard';
 import { RequirePermission } from '@/common/permissions/require-permission.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { MembersService } from './members.service';
 
 class UpdateRoleDto {
   @IsIn(['ADMIN', 'MANAGER', 'DEVELOPER', 'REVIEWER', 'VIEWER', 'GUEST'])

@@ -1,16 +1,17 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { CheckPermissionQueryDto, SubmitContributionDto } from './dto/contribution.dto';
+import { SubmitContributionDto } from './dto/contribution.dto';
 import { GetFileContentDto } from './dto/get-file-content.dto';
 import { GetRepoTreeDto } from './dto/get-repo-tree.dto';
 import { ImportGithubRepoDto } from './dto/import-repo.dto';
 import { ListUserReposDto } from './dto/list-user-repos.dto';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { GithubService } from './github.service';
+
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
 @Controller('github')
 @UseGuards(SessionGuard)

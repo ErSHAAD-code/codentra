@@ -2,11 +2,12 @@ import { Controller, Get, Param, Post, Query, UploadedFile, UseGuards, UseInterc
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 
+import { MAX_UPLOAD_SIZE_BYTES } from './upload-validation';
+import { UploadsService } from './uploads.service';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { MAX_UPLOAD_SIZE_BYTES } from './upload-validation';
-import { UploadsService } from './uploads.service';
 
 @Controller('repositories/:repositoryId/uploads')
 @UseGuards(SessionGuard)

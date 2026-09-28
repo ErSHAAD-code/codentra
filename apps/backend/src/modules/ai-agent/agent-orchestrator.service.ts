@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 
-import { AI_PROVIDER, AIProvider, ChatMessage } from '@/modules/ai-provider/ai-provider.interface';
 
 import { AgentChangesetService } from './agent-changeset.service';
 import { AgentFileChange } from './dto/agent-changeset.dto';
 import { AgentRunResult, AgentToolCall, AgentToolEvent, AgentToolName, RunAgentDto } from './dto/run-agent.dto';
 import { AgentValidationService } from './tools/agent-validation.service';
 import { RepositoryToolsService, RepositoryTreeItem } from './tools/repository-tools.service';
+
+import { AI_PROVIDER, AIProvider, ChatMessage } from '@/modules/ai-provider/ai-provider.interface';
 
 interface OrchestratorContext {
   userId: string;
@@ -411,7 +412,7 @@ Rules:
     };
   }
 
-  private defaultSteps(task: string) {
+  private defaultSteps(_task: string) {
     return [
       { id: 'step-1', title: 'Audit Codebase', description: 'Analyze architecture.', status: 'pending' as const },
       { id: 'step-2', title: 'Propose Modifications', description: 'Prepare changeset.', status: 'pending' as const },

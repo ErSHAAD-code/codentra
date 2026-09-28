@@ -1,13 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ArtifactType } from '@prisma/client';
+
+import { EditorAiPromptDto, EditorAiResponse } from './dto/editor-ai.dto';
+import { EditorReviewRequestDto, EditorReviewResult } from './dto/editor-review.dto';
+import { PROMPTS } from './prompts';
 
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { AI_PROVIDER, AIProvider } from '@/modules/ai-provider/ai-provider.interface';
 import { RepositoriesService } from '@/modules/repositories/repositories.service';
 
-import { EditorAiPromptDto, EditorAiResponse } from './dto/editor-ai.dto';
-import { EditorReviewRequestDto, EditorReviewResult } from './dto/editor-review.dto';
-import { PROMPTS } from './prompts';
 
 const FRAMEWORK_BY_LANGUAGE: Record<string, string> = {
   PYTHON: 'PyTest',

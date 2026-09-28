@@ -1,10 +1,11 @@
 import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 
+import { NotificationsService } from './notifications.service';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
 @UseGuards(SessionGuard)

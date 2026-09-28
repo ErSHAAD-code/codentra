@@ -21,7 +21,7 @@ export async function callClaude(systemPrompt: string, userMessage: string): Pro
     throw new Error(`Claude API error: ${response.status} ${await response.text()}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
   const textBlock = data.content?.find((block: { type: string }) => block.type === 'text');
   return textBlock?.text ?? '{"findings": []}';
 }

@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { QueueService } from '@/common/queue/queue.service';
-import { ProjectsService } from '@/modules/projects/projects.service';
-
 import {
   CheckPermissionQueryDto,
   ContributionSubmissionResult,
@@ -11,6 +7,11 @@ import {
   SubmitContributionDto,
 } from './dto/contribution.dto';
 import { GithubClient } from './github-client';
+
+import { PrismaService } from '@/common/prisma/prisma.service';
+import { QueueService } from '@/common/queue/queue.service';
+import { ProjectsService } from '@/modules/projects/projects.service';
+
 
 interface GithubRepoMetadata {
   name: string;

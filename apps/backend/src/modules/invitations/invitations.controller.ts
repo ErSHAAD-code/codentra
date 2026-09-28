@@ -1,13 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 
+import { CreateInvitationDto } from './dto/invitation.dto';
+import { InvitationsService } from './invitations.service';
+
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { PermissionGuard } from '@/common/permissions/permission.guard';
 import { RequirePermission } from '@/common/permissions/require-permission.decorator';
 import { SessionGuard } from '@/modules/auth/guards/session.guard';
 
-import { CreateInvitationDto } from './dto/invitation.dto';
-import { InvitationsService } from './invitations.service';
 
 @Controller('organizations/:organizationId/invitations')
 @UseGuards(SessionGuard, PermissionGuard)
