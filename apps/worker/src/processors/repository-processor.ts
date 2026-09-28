@@ -119,8 +119,8 @@ async function buildAIContext(prisma: PrismaClient, repositoryId: string): Promi
   const sorted = [...byLanguage.entries()].filter(([l]) => l !== 'UNKNOWN').sort((a, b) => b[1] - a[1]);
   const primary = sorted[0]?.[0] ?? 'UNKNOWN';
 
-  const functionCount = files.reduce((sum, f) => sum + (Array.isArray(f.functions) ? f.functions.length : 0), 0);
-  const classCount = files.reduce((sum, f) => sum + (Array.isArray(f.classes) ? f.classes.length : 0), 0);
+  const functionCount = files.reduce((sum: number, f: any) => sum + (Array.isArray(f.functions) ? f.functions.length : 0), 0);
+  const classCount = files.reduce((sum: number, f: any) => sum + (Array.isArray(f.classes) ? f.classes.length : 0), 0);
 
   const summary =
     `Repository with ${files.length} files across ${folders.length} folders. ` +

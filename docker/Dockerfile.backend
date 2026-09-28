@@ -21,6 +21,7 @@ CMD ["pnpm", "dev"]
 # ---- build: compile TypeScript for production ----
 FROM deps AS build
 COPY . .
+RUN pnpm --filter backend exec prisma generate
 RUN pnpm --filter backend build
 
 # ---- production: minimal runtime image ----

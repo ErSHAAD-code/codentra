@@ -96,10 +96,10 @@ export function parseFindings(raw: string): RawFinding[] {
 async function computeScores(prisma: PrismaClient, analysisId: string) {
   const findings = await prisma.finding.findMany({ where: { analysisId } });
 
-  const deduct = (category?: FindingCategory) =>
+  const deduct = (category?: string) =>
     findings
-      .filter((f) => !category || f.category === category)
-      .reduce((sum, f) => sum + SEVERITY_WEIGHT[f.severity], 0);
+      .filter((f: any) => !category || f.category === category)
+      .reduce((sum: number, f: any) => sum + (SEVERITY_WEIGHT[f.severity as FindingSeverity] ?? 0), 0);
 
   const clamp = (score: number) => Math.max(0, Math.min(100, score));
 
