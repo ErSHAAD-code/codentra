@@ -84,6 +84,10 @@ jobs:
       - run: pnpm --filter backend exec prisma generate
       - run: pnpm --filter frontend exec playwright install --with-deps chromium
       - run: pnpm --filter frontend test:e2e
+        env:
+          AUTH_SECRET: 'ci_auth_secret_for_e2e_testing_min_32_chars'
+          NEXTAUTH_SECRET: 'ci_auth_secret_for_e2e_testing_min_32_chars'
+          NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
