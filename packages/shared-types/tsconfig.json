@@ -1,0 +1,9 @@
+{
+  "extends": "@codentra/ts-config/base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "es2022",
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

@@ -120,7 +120,6 @@ export function GithubUserSearch({ onSelectUser, initialUsername = '' }: GithubU
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary"
               >
                 {user.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatar_url}
                     alt={user.login}

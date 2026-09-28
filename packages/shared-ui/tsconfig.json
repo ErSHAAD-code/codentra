@@ -1,0 +1,10 @@
+{
+  "extends": "@codentra/ts-config/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "target": "es2022",
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

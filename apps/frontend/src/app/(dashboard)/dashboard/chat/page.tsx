@@ -103,7 +103,6 @@ export default function ChatPage() {
 
   useEffect(() => {
     loadRepositories().catch(() => setRepositories([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

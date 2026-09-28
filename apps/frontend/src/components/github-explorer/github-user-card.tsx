@@ -17,7 +17,6 @@ export function GithubUserCard({ user }: GithubUserCardProps) {
         <div className="flex items-start gap-4">
           {/* Avatar */}
           {user.avatar_url && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.avatar_url}
               alt={user.login}

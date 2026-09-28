@@ -183,7 +183,7 @@ export function AgentMode({
       setValidationResult(res);
     } catch (err: any) {
       setError(err?.message ?? 'Validation failed');
-    } fontally: {
+    } finally {
       setIsValidating(false);
     }
   };

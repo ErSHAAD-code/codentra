@@ -38,3 +38,5 @@ apps/backend/prisma/migrations/dev.db
 
 # Misc
 *.tsbuildinfo
+apps/frontend/public/sw.js
+apps/frontend/public/workbox-*.js
