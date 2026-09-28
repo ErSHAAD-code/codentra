@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable
 WORKDIR /app
 
@@ -22,7 +22,7 @@ COPY . .
 RUN pnpm --filter backend exec prisma generate
 RUN pnpm --filter worker build
 
-FROM node:20-alpine AS production
+FROM node:26-alpine AS production
 RUN corepack enable
 WORKDIR /app
 COPY --from=build /app/apps/worker/dist ./dist
