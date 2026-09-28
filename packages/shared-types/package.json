@@ -11,6 +11,6 @@
   "devDependencies": {
     "@codentra/ts-config": "workspace:*",
     "@codentra/eslint-config": "workspace:*",
-    "typescript": "^5.5.0"
+    "typescript": "^7.0.2"
   }
 }
