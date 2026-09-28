@@ -15,7 +15,7 @@ jobs:
       matrix:
         app: [frontend, backend, worker]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set lowercased repository name
         run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
