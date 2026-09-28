@@ -1,0 +1,49 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # allows manual rollback re-runs from a previous commit
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [frontend, backend, worker]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.${{ matrix.app }}
+          target: production
+          push: true
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.app }}:${{ github.sha }},ghcr.io/${{ github.repository }}/${{ matrix.app }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-production:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: production # requires manual approval in repo Settings > Environments
+      url: https://codentra.example.com
+    steps:
+      - name: Trigger platform deploy
+        run: |
+          echo "Deploy step is platform-specific (Railway/Render/Fly.io deploy hook)."
+          echo "Wire the actual deploy hook URL here as a repository secret once hosting is chosen."
+        # Example for Railway: curl -X POST "$RAILWAY_DEPLOY_HOOK"

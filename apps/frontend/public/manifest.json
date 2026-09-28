@@ -1,0 +1,22 @@
+{
+  "name": "Codentra AI Code Intelligence",
+  "short_name": "Codentra",
+  "description": "AI-powered code review and bug detection.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070810",
+  "theme_color": "#070810",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://www.google.com/s2/favicons?domain=codentra.com&sz=192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://www.google.com/s2/favicons?domain=codentra.com&sz=512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

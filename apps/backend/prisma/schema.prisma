@@ -1,0 +1,639 @@
+// Codentra — Prisma Schema
+// Phase 1 scope: Users, Organizations, Workspaces, Projects/Repositories,
+// Sessions, ActivityLogs. Business logic (scans, findings, AI context)
+// is added starting Phase 2 — this schema is designed so those additions
+// are pure extensions, not migrations that touch existing tables.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// Identity & Access
+// ────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  passwordHash  String? // null for OAuth-only users
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships   OrganizationMember[]
+  sessions      Session[]
+  accounts      Account[]
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+  comments      Comment[]
+
+  @@map("users")
+}
+
+// Auth.js OAuth account linkage (GitHub, etc.)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String?
+  refresh_token     String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Server-side sessions (Auth.js Prisma adapter) — enables server-side revocation,
+// which a JWT-only setup cannot do cleanly.
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ────────────────────────────────────────────────────────────
+// Multi-tenancy
+// ────────────────────────────────────────────────────────────
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MANAGER
+  DEVELOPER
+  REVIEWER
+  VIEWER
+  GUEST
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  // true for the auto-created personal org every user gets on sign-up
+  isPersonal Boolean @default(false)
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members    OrganizationMember[]
+  workspaces Workspace[]
+  invitations Invitation[]
+
+  @@map("organizations")
+}
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrgRole  @default(DEVELOPER)
+  joinedAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("organization_members")
+}
+
+// Groups projects within an org (e.g. "Backend Team", "Personal Projects")
+model Workspace {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects     Project[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("workspaces")
+}
+
+// ────────────────────────────────────────────────────────────
+// Projects (Repositories arrive as a distinct concept in Phase 2 —
+// Project is the Phase 1 container; Phase 2 adds Repository as a
+// child of Project without altering this table)
+// ────────────────────────────────────────────────────────────
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  repositories Repository[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@map("projects")
+}
+
+// ────────────────────────────────────────────────────────────
+// Audit trail
+// ────────────────────────────────────────────────────────────
+
+// ────────────────────────────────────────────────────────────
+// Phase 2: Repository Intelligence Engine
+// ────────────────────────────────────────────────────────────
+
+enum RepositoryType {
+  GITHUB
+  ZIP_UPLOAD
+  SINGLE_FILE
+}
+
+enum RepositoryStatus {
+  PENDING // uploaded/connected, not yet parsed
+  PROCESSING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+model Repository {
+  id          String            @id @default(cuid())
+  projectId   String
+  name        String
+  type        RepositoryType
+  status      RepositoryStatus  @default(PENDING)
+  githubUrl   String? // set when type = GITHUB
+  githubOwner String?
+  githubRepo  String?
+  connectedByUserId String? // whose GitHub OAuth token authorizes syncs for this repo
+  lastSyncedAt DateTime?
+  defaultBranch String?
+  sizeBytes   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folders           RepositoryFolder[]
+  files             RepositoryFile[]
+  uploads           Upload[]
+  languageStats     LanguageStatistic[]
+  aiContext         AIContext?
+  chats             Chat[]
+  analyses          Analysis[]
+
+  @@index([projectId])
+  @@map("repositories")
+}
+
+model RepositoryFolder {
+  id           String   @id @default(cuid())
+  repositoryId String
+  path         String // full path from repo root, e.g. "src/modules/auth"
+  parentPath   String? // null for top-level folders
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, path])
+  @@index([repositoryId])
+  @@map("repository_folders")
+}
+
+enum SupportedLanguage {
+  PYTHON
+  JAVA
+  JAVASCRIPT
+  TYPESCRIPT
+  C
+  CPP
+  GO
+  RUST
+  PHP
+  KOTLIN
+  SWIFT
+  HTML
+  CSS
+  SQL
+  JSON
+  YAML
+  MARKDOWN
+  UNKNOWN
+}
+
+model RepositoryFile {
+  id           String            @id @default(cuid())
+  repositoryId String
+  path         String // full path from repo root
+  extension    String?
+  language     SupportedLanguage @default(UNKNOWN)
+  sizeBytes    Int
+  lineCount    Int               @default(0)
+  content      String? // stored for files under a size threshold; large files reference blob storage (Phase 7)
+  // Parser output — structured, not free text, so it's directly usable by the Context Engine
+  imports      Json? // string[]
+  exports      Json? // string[]
+  classes      Json? // { name, methods, lineStart, lineEnd }[]
+  functions    Json? // { name, params, lineStart, lineEnd }[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, path])
+  @@index([repositoryId])
+  @@index([repositoryId, language])
+  @@map("repository_files")
+}
+
+enum UploadStatus {
+  UPLOADING
+  VALIDATING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Upload {
+  id           String       @id @default(cuid())
+  repositoryId String
+  fileName     String
+  sizeBytes    Int
+  status       UploadStatus @default(UPLOADING)
+  errorMessage String?
+  createdAt    DateTime     @default(now())
+  completedAt  DateTime?
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId])
+  @@map("uploads")
+}
+
+model LanguageStatistic {
+  id           String            @id @default(cuid())
+  repositoryId String
+  language     SupportedLanguage
+  fileCount    Int               @default(0)
+  lineCount    Int               @default(0)
+  percentage   Float             @default(0)
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, language])
+  @@index([repositoryId])
+  @@map("language_statistics")
+}
+
+// One structured, LLM-ready context blob per repository — rebuilt whenever
+// the repo is re-parsed. This is what every AI feature (chat, review,
+// docs, tests — Phase 2 onward) reads from, instead of re-deriving context
+// from raw files each time.
+model AIContext {
+  id            String   @id @default(cuid())
+  repositoryId  String   @unique
+  summary       String? // AI-generated repository summary
+  techStack     Json? // { language, framework, buildTool, packageManager }
+  architecture  Json? // high-level folder/module relationships
+  dependencies  Json?
+  generatedAt   DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@map("ai_contexts")
+}
+
+model Chat {
+  id           String   @id @default(cuid())
+  repositoryId String
+  userId       String
+  title        String   @default("New chat")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@index([repositoryId])
+  @@index([userId])
+  @@map("chats")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  chatId    String
+  role      MessageRole
+  content   String
+  createdAt DateTime    @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("messages")
+}
+
+// ────────────────────────────────────────────────────────────
+// Phase 3: AI Review Engine
+// ────────────────────────────────────────────────────────────
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Analysis {
+  id                    String         @id @default(cuid())
+  repositoryId          String
+  status                AnalysisStatus @default(QUEUED)
+  triggeredBy           String // userId
+  overallScore          Int? // 0-100
+  securityScore         Int?
+  performanceScore      Int?
+  maintainabilityScore  Int?
+  complexityScore       Int?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  errorMessage          String?
+  createdAt             DateTime       @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  findings   Finding[]
+
+  @@index([repositoryId])
+  @@map("analyses")
+}
+
+enum FindingCategory {
+  BUG
+  SECURITY
+  CODE_SMELL
+  PERFORMANCE
+  ARCHITECTURE
+}
+
+enum FindingSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingSource {
+  STATIC
+  AI
+}
+
+enum FindingStatus {
+  OPEN
+  RESOLVED
+  IGNORED
+}
+
+model Finding {
+  id           String          @id @default(cuid())
+  analysisId   String
+  filePath     String
+  lineStart    Int?
+  lineEnd      Int?
+  category     FindingCategory
+  severity     FindingSeverity
+  source       FindingSource
+  title        String
+  description  String
+  suggestedFix String?
+  status       FindingStatus   @default(OPEN)
+  createdAt    DateTime        @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([analysisId, severity])
+  @@index([analysisId, category])
+  @@map("findings")
+}
+
+// ────────────────────────────────────────────────────────────
+// Phase 4: Enterprise — Invitations, Notifications, Comments, Approvals
+// ────────────────────────────────────────────────────────────
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  email          String
+  role           OrgRole          @default(DEVELOPER)
+  token          String           @unique @default(cuid())
+  status         InvitationStatus @default(PENDING)
+  invitedBy      String // userId
+  expiresAt      DateTime
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitations")
+}
+
+enum NotificationType {
+  REPOSITORY_UPLOADED
+  REVIEW_COMPLETED
+  AI_ANALYSIS_FINISHED
+  MEMBER_JOINED
+  MEMBER_INVITED
+  PERMISSION_CHANGED
+  SYSTEM_ALERT
+  SECURITY_ALERT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  link      String? // relative path the notification should navigate to
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  findingId  String? // comment on a specific finding, or...
+  repositoryId String? // ...a general repository discussion
+  authorId   String
+  parentId   String? // self-relation for replies; null = top-level
+  content    String
+  resolved   Boolean  @default(false)
+  editedAt   DateTime?
+  createdAt  DateTime @default(now())
+
+  author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([findingId])
+  @@index([repositoryId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+enum ReviewApprovalStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_CHANGES
+}
+
+model ReviewApproval {
+  id         String                @id @default(cuid())
+  analysisId String                @unique
+  status     ReviewApprovalStatus  @default(DRAFT)
+  reviewerId String?
+  reviewedAt DateTime?
+  notes      String?
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  @@map("review_approvals")
+}
+
+// ────────────────────────────────────────────────────────────
+// Phase 5: GitHub Integration
+// ────────────────────────────────────────────────────────────
+
+enum WebhookEventType {
+  PUSH
+  PULL_REQUEST
+  BRANCH_CREATED
+  BRANCH_DELETED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model WebhookEvent {
+  id           String              @id @default(cuid())
+  repositoryId String
+  type         WebhookEventType
+  status       WebhookEventStatus  @default(RECEIVED)
+  payload      Json
+  errorMessage String?
+  createdAt    DateTime            @default(now())
+  processedAt  DateTime?
+
+  @@index([repositoryId])
+  @@map("webhook_events")
+}
+
+// ────────────────────────────────────────────────────────────
+// Phase 6: AI Productivity
+// ────────────────────────────────────────────────────────────
+
+enum ArtifactType {
+  README
+  DOCUMENTATION
+  UNIT_TEST
+  API_DOCUMENTATION
+  DIAGRAM
+  COMMIT_MESSAGE
+  CODE_EXPLANATION
+  ARCHITECTURE_EXPLANATION
+  REFACTOR_SUGGESTION
+}
+
+// Single table for every AI-generated artifact type, rather than a
+// dedicated table per type (GeneratedDocs, GeneratedTests, ...) — the
+// shape (type + optional target file + text content) is identical
+// across all of them, so a discriminated table avoids nine near-duplicate
+// models for no added query power.
+model GeneratedArtifact {
+  id           String       @id @default(cuid())
+  repositoryId String
+  type         ArtifactType
+  targetPath   String? // file/function the artifact is about, if applicable
+  content      String
+  createdAt    DateTime     @default(now())
+
+  @@index([repositoryId])
+  @@index([repositoryId, type])
+  @@map("generated_artifacts")
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  organizationId String?
+  action         String // e.g. "project.created", "member.invited"
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("activity_logs")
+}

@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: codentra
+          POSTGRES_PASSWORD: codentra_ci_password
+          POSTGRES_DB: codentra
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U codentra"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Security audit
+        run: pnpm audit --audit-level=critical || echo "::warning::Non-critical vulnerabilities found — review before release"
+
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://codentra:codentra_ci_password@localhost:5432/codentra
+          REDIS_URL: redis://localhost:6379
+
+      - name: Test
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://codentra:codentra_ci_password@localhost:5432/codentra
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: apps/*/coverage
+          if-no-files-found: ignore
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter frontend exec playwright install --with-deps chromium
+      - run: pnpm --filter frontend test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report
+          if-no-files-found: ignore

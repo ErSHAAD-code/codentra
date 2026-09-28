@@ -1,0 +1,103 @@
+version: '3.9'
+
+# Codentra local development stack.
+# Run from repo root: docker compose -f docker/docker-compose.yml --env-file .env up
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: codentra-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codentra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codentra_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-codentra}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - codentra_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-codentra}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: codentra-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - codentra_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+      target: development
+    container_name: codentra-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    ports:
+      - '${BACKEND_PORT:-4000}:4000'
+    volumes:
+      - ../apps/backend:/app/apps/backend
+      - /app/apps/backend/node_modules
+      - codentra_uploads:/app/tmp/uploads
+    command: pnpm --filter backend dev
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      target: development
+    container_name: codentra-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - ../.env
+    ports:
+      - '${FRONTEND_PORT:-3000}:3000'
+    volumes:
+      - ../apps/frontend:/app/apps/frontend
+      - /app/apps/frontend/node_modules
+      - /app/apps/frontend/.next
+    command: pnpm --filter frontend dev
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+      target: development
+    container_name: codentra-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    volumes:
+      - ../apps/worker:/app/apps/worker
+      - /app/apps/worker/node_modules
+      - codentra_uploads:/app/tmp/uploads
+    command: pnpm --filter worker dev
+
+volumes:
+  codentra_postgres_data:
+  codentra_redis_data:
+  codentra_uploads:
